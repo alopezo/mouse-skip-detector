@@ -1,0 +1,335 @@
+:root {
+  --bg: #020617;
+  --panel: #0b1220;
+  --panel-border: #1e293b;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --warn: #ef4444;
+  --scroll-track: #111827;
+  --scroll-thumb: #334155;
+  --scroll-thumb-hover: #475569;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  background: radial-gradient(circle at 15% 10%, #0f172a 0%, var(--bg) 55%);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+}
+
+.page {
+  width: min(1300px, 100%);
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.copyright {
+  margin: 2px 2px 0;
+  color: #64748b;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-align: right;
+  opacity: 0.8;
+}
+
+.panel {
+  background: color-mix(in srgb, var(--panel) 86%, black);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.controls h1,
+.metrics h2,
+.metrics h3 {
+  margin: 0 0 8px;
+}
+
+.controls p {
+  margin: 0 0 10px;
+  color: var(--muted);
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+button {
+  border: 1px solid #334155;
+  background: #111827;
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.status {
+  color: var(--muted);
+}
+
+.stage-layout {
+  --stage-height: 560px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  align-items: start;
+}
+
+.capture-stage {
+  position: relative;
+  min-height: var(--stage-height);
+  height: var(--stage-height);
+  border-radius: 12px;
+  border: 1px solid #334155;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.capture-stage.is-countdown {
+  border-color: var(--accent);
+  animation: stage-border-pulse 1s ease-in-out infinite;
+}
+
+.capture-stage::after {
+  content: 'Test area';
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: #64748b;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+}
+
+.capture-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.stage-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  text-align: center;
+  background: color-mix(in srgb, #020617 72%, transparent);
+  pointer-events: none;
+}
+
+.stage-overlay p {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.stage-overlay strong {
+  color: var(--accent);
+  font-size: 44px;
+  line-height: 1;
+}
+
+.metrics ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.metrics li {
+  color: #cbd5e1;
+}
+
+.metrics {
+  min-height: var(--stage-height);
+  height: var(--stage-height);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.muted {
+  color: var(--muted);
+  margin: 0;
+}
+
+.skip-log {
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+.metrics .skip-log {
+  max-height: none;
+  flex: 1;
+  min-height: 0;
+}
+
+.skip-log li {
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+  padding: 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--warn) 11%, #0f172a);
+}
+
+.report-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, #020617 70%, transparent);
+  backdrop-filter: blur(2px);
+  z-index: 30;
+}
+
+.report-dialog {
+  width: min(560px, 100%);
+  max-height: min(86vh, 760px);
+  overflow-y: auto;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  background: #0b1220;
+  padding: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+.report-dialog h2,
+.report-dialog h3 {
+  margin: 0 0 8px;
+}
+
+.report-dialog p {
+  margin: 0 0 10px;
+  color: var(--muted);
+}
+
+.report-dialog ul {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.methodology-list {
+  gap: 10px;
+  font-size: 13px;
+}
+
+.methodology-list li {
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, #111827 86%, black);
+}
+
+.methodology-list strong {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.methodology-list span {
+  color: #cbd5e1;
+  line-height: 1.35;
+}
+
+.report-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.report-skip-log {
+  max-height: 180px;
+}
+
+.skip-log::-webkit-scrollbar,
+.report-dialog::-webkit-scrollbar {
+  width: 10px;
+}
+
+.skip-log::-webkit-scrollbar-track,
+.report-dialog::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+  border-radius: 10px;
+}
+
+.skip-log::-webkit-scrollbar-thumb,
+.report-dialog::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 10px;
+  border: 2px solid var(--scroll-track);
+}
+
+.skip-log::-webkit-scrollbar-thumb:hover,
+.report-dialog::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+}
+
+@keyframes stage-border-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+}
+
+@media (max-width: 960px) {
+  .stage-layout {
+    --stage-height: 420px;
+    grid-template-columns: 1fr;
+  }
+
+  .capture-stage {
+    min-height: var(--stage-height);
+    height: var(--stage-height);
+  }
+
+  .metrics {
+    min-height: 0;
+    height: auto;
+  }
+
+  .metrics .skip-log {
+    flex: initial;
+    max-height: 260px;
+  }
+}
