@@ -240,7 +240,14 @@ export default function App(): JSX.Element {
     const last = samples[samples.length - 1];
     const sessionSeconds = Math.max(0.001, (last.t - first.t) / 1000);
 
-    const rawScore = 100 - skipCount * 2.2 - Math.max(0, skipDensityPer1000Px - 0.9) * 8;
+    const skipPenalty = skipCount * 1.8;
+    const densityPenalty =
+      skipDensityPer1000Px <= 0.25
+        ? 0
+        : skipDensityPer1000Px <= 1
+          ? (skipDensityPer1000Px - 0.25) * 10
+          : 7.5 + (skipDensityPer1000Px - 1) * 16;
+    const rawScore = 100 - skipPenalty - densityPenalty;
     const score = Math.max(0, Math.min(100, Math.round(rawScore)));
 
     return {
@@ -327,7 +334,15 @@ export default function App(): JSX.Element {
       ? 'Recording in progress. Move naturally inside the test area.'
       : 'Press Start to begin a short countdown before recording.';
   const reportScoreLabel =
-    report === null ? '' : report.stats.score >= 85 ? 'Good' : report.stats.score >= 70 ? 'Fair' : 'Needs attention';
+    report === null
+      ? ''
+      : report.stats.score >= 92
+        ? 'Excellent'
+        : report.stats.score >= 80
+          ? 'Acceptable'
+          : report.stats.score >= 65
+            ? 'Needs work'
+            : 'Poor';
 
   return (
     <main className="page">
@@ -489,7 +504,7 @@ export default function App(): JSX.Element {
               </li>
               <li>
                 <strong>Score</strong>
-                <span>Produces a 0-100 session score from skip count and skip density.</span>
+                <span>Produces a calibrated 0-100 score from skip count and skip density.</span>
               </li>
               <li>
                 <strong>Limitation</strong>
