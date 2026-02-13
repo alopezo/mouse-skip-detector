@@ -41,6 +41,13 @@ const SAMPLE_LIMIT = 12000;
 const RECENT_SKIPS_LIMIT = 8;
 const COUNTDOWN_SECONDS = 3;
 
+function trackAnalyticsEvent(eventName: string, params: Record<string, string | number | boolean>): void {
+  if (typeof window === 'undefined' || typeof window.gtag !== 'function') {
+    return;
+  }
+  window.gtag('event', eventName, params);
+}
+
 function percentile(values: number[], p: number): number {
   if (values.length === 0) {
     return 0;
@@ -265,6 +272,13 @@ export default function App(): JSX.Element {
   }, [samples]);
 
   const exportSession = useCallback(() => {
+    trackAnalyticsEvent('export_session', {
+      sample_count: samples.length,
+      skip_count: stats.skipCount,
+      skip_density_per_1000px: Number(stats.skipDensityPer1000Px.toFixed(3)),
+      session_score: stats.score
+    });
+
     const payload = {
       exportedAt: new Date().toISOString(),
       stats,
@@ -289,6 +303,13 @@ export default function App(): JSX.Element {
     if (!report) {
       return;
     }
+    trackAnalyticsEvent('export_report', {
+      sample_count: report.stats.sampleCount,
+      skip_count: report.stats.skipCount,
+      skip_density_per_1000px: Number(report.stats.skipDensityPer1000Px.toFixed(3)),
+      session_score: report.stats.score
+    });
+
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -306,6 +327,13 @@ export default function App(): JSX.Element {
       setRunState('idle');
       lastPointRef.current = null;
       if (stats.sampleCount > 0) {
+        trackAnalyticsEvent('stop_test', {
+          sample_count: stats.sampleCount,
+          skip_count: stats.skipCount,
+          skip_density_per_1000px: Number(stats.skipDensityPer1000Px.toFixed(3)),
+          session_score: stats.score,
+          duration_seconds: Number(stats.sessionSeconds.toFixed(2))
+        });
         setReport({
           generatedAt: new Date().toISOString(),
           stats: { ...stats },
@@ -319,13 +347,26 @@ export default function App(): JSX.Element {
       setRunState('idle');
       setCountdown(COUNTDOWN_SECONDS);
       lastPointRef.current = null;
+      trackAnalyticsEvent('cancel_countdown', {
+        countdown_remaining: countdown
+      });
       return;
     }
+    trackAnalyticsEvent('start_test', {
+      countdown_seconds: COUNTDOWN_SECONDS
+    });
     resetSession();
     setRunState('countdown');
     setCountdown(COUNTDOWN_SECONDS);
     lastPointRef.current = null;
-  }, [resetSession, runState, skipEvents, stats]);
+  }, [countdown, resetSession, runState, skipEvents, stats]);
+
+  const handleMethodologyOpen = useCallback(() => {
+    trackAnalyticsEvent('open_methodology', {
+      from: runState
+    });
+    setIsMethodologyOpen(true);
+  }, [runState]);
 
   const statusLabel = isCountdown ? `Countdown (${countdown}s)` : isCapturing ? 'Capturing' : 'Idle';
   const instructions = isCountdown
@@ -359,7 +400,7 @@ export default function App(): JSX.Element {
           <button type="button" onClick={exportSession} disabled={samples.length === 0}>
             Export JSON
           </button>
-          <button type="button" onClick={() => setIsMethodologyOpen(true)}>
+          <button type="button" onClick={handleMethodologyOpen}>
             Methodology
           </button>
         </div>
