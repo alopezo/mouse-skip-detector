@@ -40,6 +40,8 @@ type SessionReport = {
 const SAMPLE_LIMIT = 12000;
 const RECENT_SKIPS_LIMIT = 8;
 const COUNTDOWN_SECONDS = 3;
+const BASELINE_MIN_SAMPLES = 35;
+const WARMUP_MS = 1200;
 
 function trackAnalyticsEvent(eventName: string, params: Record<string, string | number | boolean>): void {
   if (typeof window === 'undefined' || typeof window.gtag !== 'function') {
@@ -188,8 +190,11 @@ export default function App(): JSX.Element {
       const p95Distance = percentile(recentDistances, 95);
       const p95Dt = percentile(recentDt, 95);
 
-      const distanceOutlier = p95Distance > 0 && distance > p95Distance * 2.2 && dt < 25;
-      const gapOutlier = p95Dt > 0 && dt > p95Dt * 1.8 && distance > Math.max(12, p95Distance * 1.1);
+      const elapsedSinceStart = samples.length > 0 ? t - samples[0].t : 0;
+      const baselineReady = recent.length >= BASELINE_MIN_SAMPLES && elapsedSinceStart >= WARMUP_MS;
+
+      const distanceOutlier = baselineReady && p95Distance > 0 && distance > p95Distance * 2.2 && dt < 25;
+      const gapOutlier = baselineReady && p95Dt > 0 && dt > p95Dt * 1.8 && distance > Math.max(12, p95Distance * 1.1);
       const isSkip = distanceOutlier || gapOutlier;
 
       const sample: Sample = { x, y, t, distance, dt, speed, isSkip };
@@ -372,7 +377,7 @@ export default function App(): JSX.Element {
   const instructions = isCountdown
     ? `Move your cursor into the test area. Recording starts in ${countdown}s.`
     : isCapturing
-      ? 'Recording in progress. Move naturally inside the test area.'
+      ? 'Recording in progress.'
       : 'Press Start to begin a short countdown before recording.';
   const reportScoreLabel =
     report === null
@@ -381,9 +386,10 @@ export default function App(): JSX.Element {
         ? 'Excellent'
         : report.stats.score >= 80
           ? 'Acceptable'
-          : report.stats.score >= 65
+      : report.stats.score >= 65
             ? 'Needs work'
             : 'Poor';
+  const showCenteredStart = runState === 'idle' && samples.length === 0;
 
   return (
     <main className="page">
@@ -412,17 +418,30 @@ export default function App(): JSX.Element {
       <section className="stage-layout">
         <div
           ref={wrapperRef}
-          className={`capture-stage ${isCountdown ? 'is-countdown' : ''}`}
+          className={`capture-stage ${isCountdown ? 'is-countdown' : ''} ${isCapturing ? 'is-capturing' : ''}`}
           onPointerMove={handlePointerMove}
           onPointerLeave={() => {
             lastPointRef.current = null;
           }}
         >
           <canvas ref={canvasRef} />
+          {showCenteredStart ? (
+            <div className="stage-empty-callout">
+              <p>Ready to run a new test?</p>
+              <button type="button" className="stage-start-btn" onClick={handleStartStopClick}>
+                Start Test
+              </button>
+            </div>
+          ) : null}
           {isCountdown ? (
             <div className="stage-overlay">
               <p>Place your cursor inside this area.</p>
               <strong>{countdown}</strong>
+            </div>
+          ) : null}
+          {isCapturing ? (
+            <div className="stage-capture-tip">
+              Move at a steady pace. New movements are compared against your recent movement baseline.
             </div>
           ) : null}
         </div>
@@ -529,7 +548,7 @@ export default function App(): JSX.Element {
               </li>
               <li>
                 <strong>Adaptive Baseline</strong>
-                <span>Uses recent p95 values to adapt to your current movement style.</span>
+                <span>Uses recent p95 values to adapt to your current movement style, so new segments are judged against your immediate history.</span>
               </li>
               <li>
                 <strong>Skip Rule A</strong>
@@ -548,6 +567,14 @@ export default function App(): JSX.Element {
                 <span>Produces a calibrated 0-100 score from skip count and skip density.</span>
               </li>
               <li>
+                <strong>Measurement Guidance</strong>
+                <span>For cleaner results, move the cursor at a relatively constant rhythm instead of alternating between very slow and very fast motions.</span>
+              </li>
+              <li>
+                <strong>Warm-up Tolerance</strong>
+                <span>The first moments of a run are ignored for skip classification until enough baseline samples are collected.</span>
+              </li>
+              <li>
                 <strong>Limitation</strong>
                 <span>Browser events are not raw sensor data, so hardware-level causes are inferred.</span>
               </li>
@@ -561,7 +588,24 @@ export default function App(): JSX.Element {
         </div>
       ) : null}
 
-      <footer className="copyright">© Alejandro Lopez Osornio 2026</footer>
+      <footer className="copyright">
+        <span>© Alejandro Lopez Osornio 2026</span>
+        <a
+          className="repo-link"
+          href="https://github.com/alopezo/mouse-skip-detector"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="View source on GitHub"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M12 .5A12 12 0 0 0 8.2 23.9c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.3-1.2-1.7-1.2-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.8 1.7 3.4 2.4.1-.7.4-1.1.7-1.4-2.7-.3-5.6-1.3-5.6-6A4.7 4.7 0 0 1 5.4 9c-.1-.3-.5-1.5.1-3 0 0 1-.3 3.4 1.3a11.7 11.7 0 0 1 6.2 0c2.4-1.6 3.4-1.3 3.4-1.3.6 1.5.2 2.7.1 3a4.7 4.7 0 0 1 1.3 3.3c0 4.8-2.9 5.7-5.6 6 .4.3.8 1 .8 2v3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"
+            />
+          </svg>
+          <span>GitHub</span>
+        </a>
+      </footer>
     </main>
   );
 }

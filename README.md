@@ -3,6 +3,7 @@
 Web app to detect and measure cursor movement skips (jumps) using browser pointer events.
 
 Repository: [https://github.com/alopezo/mouse-skip-detector](https://github.com/alopezo/mouse-skip-detector)
+Live demo: [https://alopezo.github.io/mouse-skip-detector/](https://alopezo.github.io/mouse-skip-detector/)
 
 ## Features
 
